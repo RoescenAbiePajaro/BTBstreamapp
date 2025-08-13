@@ -162,9 +162,9 @@ def main():
                 if st.button("Login"):
                     verify_code(code, "student", name)
 
-                if st.button("Register New Student"):
-                    st.session_state.user_type = "register"
-                    st.rerun()
+                # if st.button("Register New Student"):
+                #     st.session_state.user_type = "register"
+                #     st.rerun()
 
             elif role == "Educator":
                 st.markdown("#### Educator Access")

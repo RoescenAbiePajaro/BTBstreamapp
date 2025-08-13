@@ -108,12 +108,12 @@ def register_student():
                     else:
                         st.error("Invalid access code. Please ask your educator for a valid code.")
 
-    # Add Back button
-    st.markdown("<br>", unsafe_allow_html=True)  # Add some spacing
-    col1, col2, col3 = st.columns([1,2,1])  # Create 3 columns with middle one being wider
-    with col2:  # Place button in middle column
-        if st.button("Back to Login", use_container_width=True):
-            st.markdown("<meta http-equiv='refresh' content='0; url='/' />", unsafe_allow_html=True)
+    # # Add Back button
+    # st.markdown("<br>", unsafe_allow_html=True)  # Add some spacing
+    # col1, col2, col3 = st.columns([1,2,1])  # Create 3 columns with middle one being wider
+    # with col2:  # Place button in middle column
+    #     if st.button("Back to Login", use_container_width=True):
+    #         st.markdown("<meta http-equiv='refresh' content='0; url='/' />", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     register_student()
