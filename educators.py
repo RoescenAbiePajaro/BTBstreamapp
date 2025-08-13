@@ -3,7 +3,15 @@ import subprocess
 import time
 from pymongo import MongoClient
 from contextlib import contextmanager
-from VirtualPainterEduc import run_virtual_painter
+
+# Import VirtualPainterEduc with error handling for PyInstaller compatibility
+try:
+    from VirtualPainterEduc import run_virtual_painter
+except ImportError as e:
+    st.error(f"Failed to import VirtualPainterEduc: {e}")
+    def run_virtual_painter():
+        st.error("Virtual Painter module not available in this build.")
+        st.info("Please ensure all dependencies are properly included.")
 
 
 st.set_page_config(
@@ -37,9 +45,16 @@ def get_mongodb_connection():
     """Context manager for MongoDB connection"""
     client = None
     try:
-        MONGODB_URI = st.secrets["MONGODB_URI"]
+        # Try to get MongoDB URI from secrets first
+        try:
+            MONGODB_URI = st.secrets["MONGODB_URI"]
+        except:
+            # Fallback to environment variable for PyInstaller compatibility
+            import os
+            MONGODB_URI = os.getenv("MONGODB_URI")
+        
         if not MONGODB_URI:
-            raise ValueError("MONGODB_URI not set in secrets.toml")
+            raise ValueError("MONGODB_URI not set in secrets.toml or environment variables")
 
         # Configure MongoDB client with SSL settings
         client = MongoClient(
@@ -71,13 +86,16 @@ def clear_session_state():
     auth_state = st.session_state.get('authenticated')
     user_type = st.session_state.get('user_type')
 
-    # Release camera if it exists
-    if 'cap' in st.session_state:
-        try:
-            st.session_state.cap.release()
-        except:
-            pass
-        del st.session_state.cap
+    # Release camera if it exists (handle both 'cap' and 'camera' keys)
+    for camera_key in ['cap', 'camera']:
+        if camera_key in st.session_state:
+            try:
+                if hasattr(st.session_state[camera_key], 'release'):
+                    st.session_state[camera_key].release()
+            except Exception:
+                pass  # Ignore errors during cleanup
+            finally:
+                del st.session_state[camera_key]
 
     # Clear virtual painter state
     if 'virtual_painter_active' in st.session_state:
@@ -94,7 +112,10 @@ def clear_session_state():
     # Clear all other session state variables except authentication
     for key in list(st.session_state.keys()):
         if key not in ['authenticated', 'user_type']:
-            del st.session_state[key]
+            try:
+                del st.session_state[key]
+            except Exception:
+                pass  # Ignore errors during cleanup
 
     # Restore authentication state
     if auth_state:
@@ -126,13 +147,22 @@ def admin_portal():
     st.sidebar.markdown("---")  # Add a separator
     if st.sidebar.button("Logout", key="educator_portal_logout"):
         # Release camera if it exists
-        if 'camera' in st.session_state:
-            st.session_state.camera.release()  # Turn off camera
-            del st.session_state.camera  # Clean up the session
+        for camera_key in ['camera', 'cap']:
+            if camera_key in st.session_state:
+                try:
+                    if hasattr(st.session_state[camera_key], 'release'):
+                        st.session_state[camera_key].release()
+                except Exception:
+                    pass
+                finally:
+                    del st.session_state[camera_key]
 
         # Clear all session state including authentication
         for key in list(st.session_state.keys()):
-            del st.session_state[key]
+            try:
+                del st.session_state[key]
+            except Exception:
+                pass
 
         # Redirect to main page
         st.markdown(

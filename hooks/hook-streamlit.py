@@ -1,15 +1,18 @@
-from PyInstaller.utils.hooks import collect_data_files, collect_submodules
+from PyInstaller.utils.hooks import copy_metadata, collect_data_files, collect_submodules
 
-# Collect all Streamlit data files
-datas = collect_data_files('streamlit')
+# Collect Streamlit metadata
+datas = copy_metadata('streamlit')
 
-# Collect all Streamlit submodules
+# Collect additional Streamlit data files
+datas += collect_data_files('streamlit')
+
+# Collect Altair for charts
+datas += collect_data_files('altair')
+
+# Collect Plotly for interactive plots
+datas += collect_data_files('plotly')
+
+# Collect additional Streamlit modules
 hiddenimports = collect_submodules('streamlit')
-
-# Add any additional Streamlit components that might be needed
-hiddenimports.extend([
-    'streamlit_webrtc',
-    'streamlit.components.v1',
-    'streamlit.runtime.scriptrunner',
-    'streamlit.runtime.caching',
-])
+hiddenimports += collect_submodules('streamlit.runtime')
+hiddenimports += collect_submodules('streamlit.web')

@@ -2,4 +2,17 @@
 developmentMode = false
 
 [server]
-port = 8502
+port = 8051
+address = "localhost"
+headless = false
+enableCORS = true
+enableXsrfProtection = true
+maxUploadSize = 200
+
+[browser]
+gatherUsageStats = false
+serverAddress = "localhost"
+serverPort = 8051
+
+[theme]
+base = "dark"

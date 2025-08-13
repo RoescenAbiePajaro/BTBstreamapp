@@ -9,9 +9,19 @@ load_dotenv()
 
 # MongoDB connection with error handling
 try:
+    # Try to get MongoDB URI from secrets first
+    try:
+        MONGODB_URI = st.secrets["MONGODB_URI"]
+    except:
+        # Fallback to environment variable for PyInstaller compatibility
+        MONGODB_URI = os.getenv("MONGODB_URI")
+    
+    if not MONGODB_URI:
+        raise ValueError("MONGODB_URI not set in secrets.toml or environment variables")
+    
     # Configure MongoDB client with SSL settings
     client = MongoClient(
-        st.secrets["MONGODB_URI"],
+        MONGODB_URI,
         tls=True,
         tlsAllowInvalidCertificates=False,
         serverSelectionTimeoutMS=5000,

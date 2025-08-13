@@ -1,22 +1,19 @@
 #run_app.spec
 
 # -*- mode: python ; coding: utf-8 -*-
-from PyInstaller.utils.hooks import collect_data_files
+from PyInstaller.utils.hooks import copy_metadata, collect_data_files
 import os
 import sys
-
-# Get path for secrets.toml
-secret_file = 'secrets.toml'
-if os.path.exists(secret_file):
-    secret_datas = [(secret_file, '.')]
-else:
-    secret_datas = []
 
 # Collect MediaPipe model and asset files
 mediapipe_datas = collect_data_files(
     'mediapipe',
     includes=['**/*.binarypb', '**/*.tflite', '**/*.json', '**/*.txt']
 )
+
+# Collect Streamlit metadata and data files
+streamlit_datas = copy_metadata('streamlit')
+streamlit_data_files = collect_data_files('streamlit')
 
 # Collect your custom folders
 pages_files = [(os.path.join('pages', f), 'pages') for f in os.listdir('pages')] if os.path.exists('pages') else []
@@ -25,11 +22,18 @@ guide_files = [(os.path.join('guide', f), 'guide') for f in os.listdir('guide')]
 static_files = [(os.path.join('static', f), 'static') for f in os.listdir('static')] if os.path.exists('static') else []
 icon_files = [(os.path.join('icon', f), 'icon') for f in os.listdir('icon')] if os.path.exists('icon') else []
 
+# Collect .streamlit config files
+streamlit_config_files = []
+if os.path.exists('.streamlit'):
+    for f in os.listdir('.streamlit'):
+        streamlit_config_files.append((os.path.join('.streamlit', f), '.streamlit'))
+
 a = Analysis(
     ['run_app.py'],
     pathex=[],
     binaries=[],
-    datas= mediapipe_datas + pages_files + header_files + guide_files + icon_files + static_files + [
+    datas= mediapipe_datas + streamlit_datas + streamlit_data_files + pages_files + header_files + guide_files + icon_files + static_files + streamlit_config_files + [
+        ('app.py', '.'),  # Ensure app.py is in the root of the bundle
         ('VirtualPainter.py', '.'),
         ('VirtualPainterEduc.py', '.'),
         ('HandTrackingModule.py', '.'),
@@ -37,17 +41,25 @@ a = Analysis(
         ('educators.py', '.'),
         ('student.py', '.'),
         ('register.py', '.'),
-        ('pages/1_educator.py', '.'),
-        ('pages/2_student.py', '.'),
-        ('pages/3_register.py', '.'),
+        ('pages/1_educator.py', 'pages'),
+        ('pages/2_student.py', 'pages'),
+        ('pages/3_register.py', 'pages'),
         ('header', 'header'),
         ('guide', 'guide'),
+        ('static', 'static'),
+        ('icon', 'icon'),
     ],
     hiddenimports=[
         'VirtualPainter', 'HandTrackingModule', 'KeyboardInput', 'VirtualPainterEduc',
-        'student', 'register', 'educators', 'pymongo', 'streamlit', 'cv2', 'numpy', 'PIL', 'tkinter',
-        'streamlit_webrtc', 'streamlit.components.v1', 'streamlit.runtime.scriptrunner',
-        'streamlit.runtime.caching', 'pymongo.database', 'pymongo.collection', 'pymongo.mongo_client'
+        'student', 'register', 'educators', 'app',
+        'pymongo', 'streamlit', 'streamlit.web', 'streamlit.web.cli',
+        'streamlit.runtime', 'streamlit.runtime.scriptrunner', 'streamlit.runtime.scriptrunner.magic_funcs',
+        'streamlit.runtime.scriptrunner.script_runner', 'streamlit.runtime.scriptrunner.script_run_context',
+        'streamlit.runtime.scriptrunner.script_requests', 'streamlit.runtime.scriptrunner.script_run_events',
+        'streamlit.runtime.scriptrunner.script_run_context', 'streamlit.runtime.scriptrunner.script_run_events',
+        'streamlit.runtime.scriptrunner.script_requests', 'streamlit.runtime.scriptrunner.script_run_context',
+        'cv2', 'numpy', 'PIL', 'tkinter', 'altair', 'plotly', 'pandas',
+        'subprocess', 'threading', 'signal', 'webbrowser', 'socket', 'os'
     ],
     hookspath=['./hooks'],
     hooksconfig={},
@@ -56,13 +68,6 @@ a = Analysis(
     noarchive=False,
     optimize=0,
 )
-
-for file in a.binaries:
-    if 'cv2' in file[0]:
-        a.binaries.append((file[0], file[1], 'BINARY'))
-    if 'mediapipe' in file[0].lower():
-        a.binaries.append((file[0], file[1], 'BINARY'))
-
 pyz = PYZ(a.pure)
 
 exe = EXE(
@@ -70,18 +75,19 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name='Beyond The Brush',
+    name='BeyondTheBrush',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,
+    console=True,  # Set to True for debugging, can be False for production
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
 )
+
 coll = COLLECT(
     exe,
     a.binaries,
@@ -89,5 +95,5 @@ coll = COLLECT(
     strip=False,
     upx=True,
     upx_exclude=[],
-    name='Beyond The Brush',
+    name='BeyondTheBrush',
 )

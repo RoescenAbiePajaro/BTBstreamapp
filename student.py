@@ -1,5 +1,13 @@
 import streamlit as st
-from VirtualPainter import run_virtuals_painter
+
+# Import VirtualPainter with error handling for PyInstaller compatibility
+try:
+    from VirtualPainter import run_virtuals_painter
+except ImportError as e:
+    st.error(f"Failed to import VirtualPainter: {e}")
+    def run_virtuals_painter():
+        st.error("Virtual Painter module not available in this build.")
+        st.info("Please ensure all dependencies are properly included.")
 
 st.set_page_config(layout="wide")
 
@@ -32,14 +40,23 @@ def student_portal():
     # Add logout button at the bottom of sidebar
     st.sidebar.markdown("---")  # Add a separator
     if st.sidebar.button("Logout", key="student_portal_logout"):
-        # Release camera if it exists
-        if 'camera' in st.session_state:
-            st.session_state.camera.release()  # Turn off camera
-            del st.session_state.camera  # Clean up the session
+        # Release camera if it exists (handle both 'camera' and 'cap' keys)
+        for camera_key in ['camera', 'cap']:
+            if camera_key in st.session_state:
+                try:
+                    if hasattr(st.session_state[camera_key], 'release'):
+                        st.session_state[camera_key].release()
+                except Exception:
+                    pass
+                finally:
+                    del st.session_state[camera_key]
 
         # Clear all session state including authentication
         for key in list(st.session_state.keys()):
-            del st.session_state[key]
+            try:
+                del st.session_state[key]
+            except Exception:
+                pass
         st.rerun()
     
     # Only show Virtual Painter
