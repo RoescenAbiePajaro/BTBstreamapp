@@ -2,6 +2,17 @@
 
 from PyInstaller.utils.hooks import collect_data_files
 import os
+import streamlit as st
+import streamlit.web.cli as stcli
+import streamlit.runtime.scriptrunner
+import sys
+
+# Get path for secrets.toml
+secret_file = 'secrets.toml'
+if os.path.exists(secret_file):
+    secret_datas = [(secret_file, '.')]
+else:
+    secret_datas = []
 
 # Collect MediaPipe model and asset files
 mediapipe_datas = collect_data_files(
@@ -9,38 +20,66 @@ mediapipe_datas = collect_data_files(
     includes=['**/*.binarypb', '**/*.tflite', '**/*.json', '**/*.txt']
 )
 
-header_path = os.path.abspath("header")
-guide_path = os.path.abspath("guide")
+# Collect Streamlit package data
+streamlit_path = os.path.dirname(st.__file__)
+streamlit_web_path = os.path.dirname(stcli.__file__)
+streamlit_runtime_path = os.path.dirname(streamlit.runtime.scriptrunner.__file__)
 
-# Make sure icon files are properly included
+# Get the site-packages directory
+site_packages = []
+for path in sys.path:
+    if 'site-packages' in path and 'Python' in path:
+        site_packages.append(path)
+
+# Find streamlit_webrtc path
+streamlit_webrtc_path = None
+for path in site_packages:
+    webrtc_path = os.path.join(path, 'streamlit_webrtc')
+    if os.path.exists(webrtc_path):
+        streamlit_webrtc_path = webrtc_path
+        break
+
+# Collect Streamlit package data
+streamlit_datas = [
+    (streamlit_path, 'streamlit'),
+    (streamlit_web_path, 'streamlit/web'),
+    (streamlit_runtime_path, 'streamlit/runtime'),
+]
+
+# Add streamlit_webrtc if found
+if streamlit_webrtc_path:
+    streamlit_datas.append((streamlit_webrtc_path, 'streamlit_webrtc'))
+
+# Collect your custom folders
+pages_files = [(os.path.join('pages', f), 'pages') for f in os.listdir('pages')] if os.path.exists('pages') else []
+header_files = [(os.path.join('header', f), 'header') for f in os.listdir('header')] if os.path.exists('header') else []
+guide_files = [(os.path.join('guide', f), 'guide') for f in os.listdir('guide')] if os.path.exists('guide') else []
+static_files = [(os.path.join('static', f), 'static') for f in os.listdir('static')] if os.path.exists('static') else []
 icon_files = [(os.path.join('icon', f), 'icon') for f in os.listdir('icon')] if os.path.exists('icon') else []
 
 a = Analysis(
     ['app.py'],
-    pathex=[],
+    pathex=[".", streamlit_path, streamlit_web_path, streamlit_runtime_path],
     binaries=[],
-    datas=mediapipe_datas + pages_files + header_files + guide_files + icon_files + static_files,
-          [('VirtualPainter.py', '.'),
-          ('secrets.toml', '.'),
-          ('VirtualPainterEduc.py', '.'),
-           ('HandTrackingModule.py', '.'),
-           ('KeyboardInput.py', '.'),
-           ('static/icons.png', 'static'),
-           ('static/logo.png', 'static'),
-           ('educators.py', '.'),
-           ('student.py', '.'),
-           ('register.py', '.'),
-           ('pages/1_educator.py', '.'),
-           ('pages/2_student.py', '.'),
-           ('pages/3_register.py', '.'),
-           ('icon/icons.png', 'icon'),
-           ('icon/logo.png', 'icon'),
-           ('header', 'header'),
-           ('guide', 'guide'),
-           ],  # Added icons.png explicitly
-
-    hiddenimports=['VirtualPainter', 'HandTrackingModule', 'KeyboardInput','VirtualPainterEduc', 'student', 'register', 'pages/1_educator', 'pages/2_student', 'pages/3_register',
-    'educators','pymongo', 'streamlit', 'cv2', 'numpy', 'PIL', 'tkinter'],
+    datas=streamlit_datas + mediapipe_datas + pages_files + header_files + guide_files + icon_files + static_files + secret_datas + [
+        ('VirtualPainter.py', '.'),
+        ('VirtualPainterEduc.py', '.'),
+        ('HandTrackingModule.py', '.'),
+        ('KeyboardInput.py', '.'),
+        ('educators.py', '.'),
+        ('student.py', '.'),
+        ('register.py', '.'),
+        ('pages/1_educator.py', '.'),
+        ('pages/2_student.py', '.'),
+        ('pages/3_register.py', '.'),
+        ('header', 'header'),
+        ('guide', 'guide'),
+    ],
+    hiddenimports=[
+        'VirtualPainter', 'HandTrackingModule', 'KeyboardInput', 'VirtualPainterEduc',
+        'student', 'register','educators', 'pymongo', 'streamlit', 'cv2', 'numpy', 'PIL', 'tkinter',
+        'streamlit.runtime.scriptrunner', 'streamlit.web', 'streamlit_webrtc', 'streamlit_webrtc.webrtc'
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -67,8 +106,6 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon='icon/app.ico',  # Only specify one icon here
-    sta
 )
 
 coll = COLLECT(
@@ -79,12 +116,4 @@ coll = COLLECT(
     upx=True,
     upx_exclude=[],
     name='BeyondTheBrush',
-    icon='icon/app.ico',  # Only specify one icon here
-    upx_exclude=["mediapipe", "streamlit", "pymongo", "cv2", "numpy", "PIL", "tkinter"],
 )
-
-
-
-
-
-
