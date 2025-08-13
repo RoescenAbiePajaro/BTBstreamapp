@@ -9,6 +9,7 @@ from KeyboardInput import KeyboardInput
 import keyboard
 from collections import deque
 import subprocess
+import sys
 
 def run_virtuals_painter():
     # Remove duplicate page config since it's already set in students_drawing.py
@@ -33,6 +34,14 @@ def run_virtuals_painter():
         """,
         unsafe_allow_html=True,
     )
+
+    def resource_path(relative_path):
+    """Get absolute path to resource (works for dev and PyInstaller)."""
+    try:
+        base_path = sys._MEIPASS  # PyInstaller temp folder
+    except AttributeError:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
     # Variables
     brushSize = 10
