@@ -1,3 +1,5 @@
+# hook-streamlit.py
+
 from PyInstaller.utils.hooks import copy_metadata, collect_data_files, collect_submodules
 
 # Collect Streamlit metadata
