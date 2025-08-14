@@ -151,13 +151,11 @@ def main():
         col1, col2, col3 = st.columns([1, 2, 1])
 
         with col2:  # Center column
-            st.markdown("### Select your role:")
             role = st.radio("", ["Student", "Educator"], key="role_radio", label_visibility="collapsed")
 
             if role == "Student":
-                st.markdown("#### Login")
-                name = st.text_input("Enter your name", placeholder="Your name", key="name_input")
-                code = st.text_input("Enter access code", placeholder="Access code", type="password", key="access_code")
+                name = st.text_input("Enter your name", placeholder="", key="name_input")
+                code = st.text_input("Enter access code", placeholder="", type="password", key="access_code")
 
                 if st.button("Login"):
                     verify_code(code, "student", name)
@@ -167,8 +165,7 @@ def main():
                 #     st.rerun()
 
             elif role == "Educator":
-                st.markdown("#### Educator Access")
-                code = st.text_input("Access code", type="password", key="admin_code")
+                code = st.text_input("Enter access code", type="password", key="admin_code")
 
                 if st.button("Login"):
                     verify_code(code, "educator", "")
