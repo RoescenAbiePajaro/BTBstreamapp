@@ -103,27 +103,38 @@ def register_student():
                 if existing_student:
                     st.warning("This name is already registered. Please use a different name.")
                 else:
-                    # Check if access code exists in MongoDB
-                    code_data = access_codes_collection.find_one({"code": access_code})
+                    # Check if access code exists and is active in MongoDB
+                    code_data = access_codes_collection.find_one({"code": access_code.strip().upper(), "is_active": True})
                     if code_data:
-                        # Register student
-                        student_data = {
-                            "name": name,
-                            "access_code": access_code,
-                            "registered_at": time.time(),
-                            "educator_id": code_data.get("educator_id", "")
-                        }
-                        students_collection.insert_one(student_data)
-                        st.success("Registration successful! You can now log in.")
+                        # Check if max uses limit is reached
+                        current_uses = students_collection.count_documents({"access_code": access_code.strip().upper()})
+                        max_uses = code_data.get("max_uses")
+                        
+                        if max_uses and current_uses >= max_uses:
+                            st.error(f"Access code '{access_code}' has reached its maximum usage limit ({max_uses} students).")
+                            st.info("Please ask your educator for a new access code.")
+                        else:
+                            # Register student
+                            student_data = {
+                                "name": name,
+                                "access_code": access_code.strip().upper(),
+                                "registered_at": time.time(),
+                                "educator_id": code_data.get("educator_id", "Admin"),
+                                "registration_date": time.strftime("%Y-%m-%d %H:%M:%S")
+                            }
+                            students_collection.insert_one(student_data)
+                            st.success("Registration successful! You can now log in.")
+                            st.info(f"Welcome, {name}! Use your name and access code '{access_code}' to log in.")
                     else:
-                        st.error("Invalid access code. Please ask your educator for a valid code.")
+                        st.error("Invalid or inactive access code. Please ask your educator for a valid code.")
+                        st.info("Make sure the code is spelled correctly and hasn't expired.")
 
-    # # Add Back button
-    # st.markdown("<br>", unsafe_allow_html=True)  # Add some spacing
-    # col1, col2, col3 = st.columns([1,2,1])  # Create 3 columns with middle one being wider
-    # with col2:  # Place button in middle column
-    #     if st.button("Back to Login", use_container_width=True):
-    #         st.markdown("<meta http-equiv='refresh' content='0; url='/' />", unsafe_allow_html=True)
+    # Add Back button
+    st.markdown("<br>", unsafe_allow_html=True)  # Add some spacing
+    col1, col2, col3 = st.columns([1,2,1])  # Create 3 columns with middle one being wider
+    with col2:  # Place button in middle column
+        if st.button("← Back to Login", use_container_width=True):
+            st.markdown("<meta http-equiv='refresh' content='0; url=./' />", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     register_student()

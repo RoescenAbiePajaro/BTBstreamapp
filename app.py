@@ -119,25 +119,46 @@ def launch_virtual_painter(role):
 
 # --- VERIFICATION LOGIC ---
 def verify_code(code, role, name):
-    code_data = access_codes_collection.find_one({"code": code})
-    student_data = students_collection.find_one({"access_code": code, "name": name})
-
-    if role == "student":
-        if student_data:
-            st.session_state.authenticated = True
-            st.session_state.user_type = "student"
-            st.session_state.username = name
-            st.success("Access granted!")
-            st.rerun()
+    try:
+        # Check if access code exists and is active
+        code_data = access_codes_collection.find_one({"code": code, "is_active": True})
+        
+        if not code_data:
+            st.error("Invalid or inactive access code.")
+            return
+        
+        if role == "student":
+            # For students, check if they're already registered with this code
+            student_data = students_collection.find_one({"access_code": code, "name": name})
+            
+            if student_data:
+                # Student is already registered, allow login
+                st.session_state.authenticated = True
+                st.session_state.user_type = "student"
+                st.session_state.username = name
+                st.success("Access granted!")
+                st.rerun()
+            else:
+                # Student not registered yet, redirect to registration
+                st.info("Student not found. Please register first or check your name and access code.")
+                st.session_state.user_type = "register"
+                st.rerun()
+                
+        elif role == "educator":
+            # For educators, just verify the access code exists and is active
+            if code_data:
+                st.session_state.authenticated = True
+                st.session_state.user_type = "educator"
+                st.success("Access granted!")
+                st.rerun()
+            else:
+                st.error("Invalid access code.")
         else:
-            st.error("Invalid name or code.")
-    elif role == "educator" and code_data:
-        st.session_state.authenticated = True
-        st.session_state.user_type = "educator"
-        st.success("Access granted!")
-        st.rerun()
-    else:
-        st.error("Access code incorrect.")
+            st.error("Invalid role specified.")
+            
+    except Exception as e:
+        st.error(f"Error during verification: {str(e)}")
+        st.error("Please try again or contact support if the issue persists.")
 
 
 # --- MAIN ---
@@ -157,8 +178,14 @@ def main():
                 name = st.text_input("Enter your name", placeholder="", key="name_input")
                 code = st.text_input("Enter access code", placeholder="", type="password", key="access_code")
 
-                if st.button("Login"):
-                    verify_code(code, "student", name)
+                col_login, col_register = st.columns(2)
+                with col_login:
+                    if st.button("Login"):
+                        verify_code(code, "student", name)
+                with col_register:
+                    if st.button("Register New Student"):
+                        st.session_state.user_type = "register"
+                        st.rerun()
 
                 # if st.button("Register New Student"):
                 #     st.session_state.user_type = "register"

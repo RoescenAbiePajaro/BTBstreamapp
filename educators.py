@@ -228,38 +228,126 @@ def admin_portal():
     elif page == "Access Codes":
         st.session_state.virtual_painter_active = False
         st.title("Access Codes Management")
+        
+
 
         try:
-            with get_mongodb_connection() as (_, access_codes_collection):
+            with get_mongodb_connection() as (students_collection, access_codes_collection):
                 # Display existing access codes
                 codes = list(access_codes_collection.find())
+                
+                # Get student count for each code
+                student_counts = {}
+                try:
+                    for code in codes:
+                        # Only count students for active access codes
+                        if code.get('is_active', True):
+                            count = students_collection.count_documents({"access_code": code["code"]})
+                            student_counts[code["code"]] = count
+                        else:
+                            student_counts[code["code"]] = 0
+                except Exception as e:
+                    st.warning(f"Could not retrieve student counts: {str(e)}")
+                    # Set default counts to 0
+                    student_counts = {code["code"]: 0 for code in codes}
 
                 if codes:
+                    st.subheader("Available Access Codes")
                     for code in codes:
-                        col1, col2 = st.columns([4, 1])
+                        col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 1, 1])
                         with col1:
-                            st.write(f"Code: {code['code']} (Created by: {code.get('educator_id', 'System')})")
+                            st.code(code['code'], language=None)
+                            # Show active status
+                            status_color = "🟢" if code.get('is_active', True) else "🔴"
+                            status_text = "Active" if code.get('is_active', True) else "Inactive"
+                            st.write(f"{status_color} {status_text}")
                         with col2:
-                            if st.button(f"Delete {code['code']}", key=f"del_code_{code['_id']}"):
-                                access_codes_collection.delete_one({"_id": code["_id"]})
-                                st.rerun()
+                            created_time = time.ctime(code.get('created_at', 0))
+                            st.write(f"Created: {created_time}")
+                            st.write(f"By: {code.get('educator_id', 'System')}")
+                        with col3:
+                            student_count = student_counts.get(code['code'], 0)
+                            st.metric("Students Used", student_count)
+                        with col4:
+                            # Toggle active status
+                            toggle_key = f"toggle_{code['_id']}"
+                            current_status = code.get('is_active', True)
+                            new_status = not current_status
+                            
+                            if st.button(
+                                "🔄 Toggle" if current_status else "✅ Activate", 
+                                key=toggle_key,
+                                help=f"{'Deactivate' if current_status else 'Activate'} access code {code['code']}"
+                            ):
+                                try:
+                                    access_codes_collection.update_one(
+                                        {"_id": code["_id"]},
+                                        {"$set": {"is_active": new_status}}
+                                    )
+                                    st.success(f"Access code '{code['code']}' {'deactivated' if not new_status else 'activated'} successfully!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Failed to update access code status: {str(e)}")
+                        with col5:
+                            # Use a unique key for the delete button
+                            delete_btn_key = f"delete_btn_{code['_id']}"
+                            
+                            if st.button(f"🗑️ Delete", key=delete_btn_key, help=f"Delete access code {code['code']}"):
+                                try:
+                                    access_codes_collection.delete_one({"_id": code["_id"]})
+                                    st.success(f"Access code '{code['code']}' deleted successfully!")
+                                    st.rerun()
+                                except Exception as e:
+                                    st.error(f"Failed to delete access code: {str(e)}")
+                else:
+                    st.info("No access codes available. Create one above for students to use.")
 
                 # Add new access code
+                st.subheader("Create New Access Code")
+                
                 with st.form("add_code_form"):
-                    new_code = st.text_input("New Access Code")
-                    submit_code = st.form_submit_button("Add Code")
+                    col1, col2, col3 = st.columns([2, 1, 1])
+                    with col1:
+                        new_code = st.text_input("New Access Code", placeholder="")
+                    with col2:
+                        max_uses = st.number_input("Max Uses", min_value=1, value=100, help="Leave empty for unlimited uses")
+                    with col3:
+                        submit_code = st.form_submit_button("➕ Create Code", use_container_width=True)
+                    
                     if submit_code and new_code:
-                        # Check if code already exists
-                        existing_code = access_codes_collection.find_one({"code": new_code})
-                        if existing_code:
-                            st.warning(f"Access code '{new_code}' already exists!")
+                        # Trim whitespace and validate
+                        new_code = new_code.strip().upper()  # Convert to uppercase for consistency
+                        if not new_code:
+                            st.warning("Access code cannot be empty!")
+                        elif len(new_code) < 3:
+                            st.warning("Access code must be at least 3 characters long!")
+                        elif not new_code.isalnum():
+                            st.warning("Access code should only contain letters and numbers!")
                         else:
-                            access_codes_collection.insert_one({
-                                "code": new_code,
-                                "created_at": time.time(),
-                                "educator_id": "Admin"
-                            })
-                            st.rerun()
+                            # Check if code already exists
+                            existing_code = access_codes_collection.find_one({"code": new_code})
+                            if existing_code:
+                                st.warning(f"Access code '{new_code}' already exists!")
+                            else:
+                                # Insert the new access code
+                                result = access_codes_collection.insert_one({
+                                    "code": new_code,
+                                    "created_at": time.time(),
+                                    "educator_id": "Admin",
+                                    "is_active": True,
+                                    "max_uses": max_uses if max_uses > 0 else None,  # Unlimited uses if 0 or negative
+                                    "description": f"Access code created by {st.session_state.get('username', 'Admin')}"
+                                })
+                                if result.inserted_id:
+                                    st.success(f"✅ Access code '{new_code}' created successfully!")
+                                    st.info(f"Students can now use this code: **{new_code}**")
+                                    if max_uses and max_uses > 0:
+                                        st.info(f"Maximum uses: {max_uses}")
+                                    else:
+                                        st.info("Unlimited uses allowed")
+                                    st.rerun()
+                                else:
+                                    st.error("Failed to create access code. Please try again.")
         except Exception as e:
             st.error(f"An error occurred while accessing the database: {str(e)}")
             st.info("Please try refreshing the page or contact support if the issue persists.")
