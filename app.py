@@ -9,7 +9,7 @@ from register import  students_collection, access_codes_collection
 
 # --- PAGE CONFIG ---
 st.set_page_config(
-    page_title="Beyond The Brush",
+    page_title="Beyond The Brush Portal",
     page_icon="static/icons.png",
     layout="centered",
     initial_sidebar_state="collapsed"
@@ -91,6 +91,14 @@ def load_css():
         height: 10px;
         border-radius: 5px;
     }
+    .login-container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .blue-button {
+        background-color: #2575fc !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -107,11 +115,11 @@ def show_loading_screen(duration=2.0):
     set_loading(False)
 
 
-def launch_virtual_painter(role):
+def launch_link(role):
     if getattr(sys, 'frozen', False):
-        subprocess.Popen([sys.executable, "VirtualPainter.py", role])
+        subprocess.Popen([sys.executable, "Link.py", role])
     else:
-        subprocess.Popen([sys.executable, "-m", "streamlit", "run", "VirtualPainter.py", "--", role])
+        subprocess.Popen([sys.executable, "-m", "streamlit", "run", "Link.py", "--", role])
         time.sleep(1)
 
     st.markdown(f"""<meta http-equiv="refresh" content="0; url='./'">""", unsafe_allow_html=True)
@@ -168,34 +176,27 @@ def main():
     if not st.session_state.authenticated:
         st.title("Beyond The Brush")
 
-        # Create three columns for the buttons
-        col1, col2, col3 = st.columns([1, 2, 1])
+        # Create a centered container for the login form
+        with st.container():
+            col1, col2, col3 = st.columns([1, 2, 1])
+            
+            with col2:  # Center column
+                role = st.radio("", ["Student", "Educator"], key="role_radio", label_visibility="collapsed")
 
-        with col2:  # Center column
-            role = st.radio("", ["Student", "Educator"], key="role_radio", label_visibility="collapsed")
+                if role == "Student":
+                    name = st.text_input("Enter your name", placeholder="", key="name_input")
+                    code = st.text_input("Access code", placeholder="", type="password", key="access_code")
 
-            if role == "Student":
-                name = st.text_input("Enter your name", placeholder="", key="name_input")
-                code = st.text_input("Enter access code", placeholder="", type="password", key="access_code")
-
-                col_login, col_register = st.columns(2)
-                with col_login:
-                    if st.button("Login"):
+                    # Login button centered and blue
+                    if st.button("Login", key="student_login", type="primary"):
                         verify_code(code, "student", name)
-                with col_register:
-                    if st.button("Register New Student"):
-                        st.session_state.user_type = "register"
-                        st.rerun()
 
-                # if st.button("Register New Student"):
-                #     st.session_state.user_type = "register"
-                #     st.rerun()
+                elif role == "Educator":
+                    code = st.text_input("Access code", type="password", key="admin_code")
 
-            elif role == "Educator":
-                code = st.text_input("Enter access code", type="password", key="admin_code")
-
-                if st.button("Login"):
-                    verify_code(code, "educator", "")
+                    # Login button centered and blue
+                    if st.button("Login", key="educator_login", type="primary"):
+                        verify_code(code, "educator", "")
 
     else:
         # User is authenticated, show appropriate page
@@ -209,11 +210,11 @@ def main():
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--painter":
-        import VirtualPainter
+        import Link
 
         if not st.session_state.get('access_granted'):
             st.error("Please authenticate from main screen.")
             st.stop()
-        VirtualPainter.run_application(sys.argv[2] if len(sys.argv) > 2 else "student")
+        Link.run_application(sys.argv[2] if len(sys.argv) > 2 else "student")
     else:
         main()

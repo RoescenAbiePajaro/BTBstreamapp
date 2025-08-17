@@ -1,12 +1,13 @@
+# student.py
 import streamlit as st
 
-# Import VirtualPainter with error handling for PyInstaller compatibility
+# Import Link with error handling for PyInstaller compatibility
 try:
-    from VirtualPainter import run_virtuals_painter
+    from Link import run_link
 except ImportError as e:
-    st.error(f"Failed to import VirtualPainter: {e}")
-    def run_virtuals_painter():
-        st.error("Virtual Painter module not available in this build.")
+    st.error(f"Failed to import Link: {e}")
+    def run_link():
+        st.error("Link module not available in this build.")
         st.info("Please ensure all dependencies are properly included.")
 
 st.set_page_config(layout="wide")
@@ -35,10 +36,6 @@ def student_portal():
         st.error("Access denied. Please login as a student.")
         st.stop()
 
-    st.sidebar.title("Navigation")
-    
-    # Add logout button at the bottom of sidebar
-    st.sidebar.markdown("---")  # Add a separator
     if st.sidebar.button("Logout", key="student_portal_logout"):
         # Release camera if it exists (handle both 'camera' and 'cap' keys)
         for camera_key in ['camera', 'cap']:
@@ -58,10 +55,10 @@ def student_portal():
             except Exception:
                 pass
         st.rerun()
-    
+
     # Only show Virtual Painter
-    st.title("Virtual Painter")
-    run_virtuals_painter()
+    st.title("")
+    run_link()
 
 if __name__ == "__main__":
     student_portal()

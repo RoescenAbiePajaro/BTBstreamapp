@@ -1,16 +1,17 @@
+# educators.py
 import streamlit as st
 import subprocess
 import time
 from pymongo import MongoClient
 from contextlib import contextmanager
 
-# Import VirtualPainterEduc with error handling for PyInstaller compatibility
+# Import Links with error handling for PyInstaller compatibility
 try:
-    from VirtualPainterEduc import run_virtual_painter
+    from Linkeduc import run_link_educator
 except ImportError as e:
-    st.error(f"Failed to import VirtualPainterEduc: {e}")
-    def run_virtual_painter():
-        st.error("Virtual Painter module not available in this build.")
+    st.error(f"Failed to import Linkeduc: {e}")
+    def run_link_educator():
+        st.error("Link Educator module not available in this build.")
         st.info("Please ensure all dependencies are properly included.")
 
 
@@ -36,8 +37,8 @@ st.markdown(
 )
 
 # Initialize session state for Virtual Painter if not exists
-if 'virtual_painter_active' not in st.session_state:
-    st.session_state.virtual_painter_active = False
+if 'link_educator_active' not in st.session_state:
+    st.session_state.link_educator_active = False
 
 
 @contextmanager
@@ -98,8 +99,8 @@ def clear_session_state():
                 del st.session_state[camera_key]
 
     # Clear virtual painter state
-    if 'virtual_painter_active' in st.session_state:
-        del st.session_state.virtual_painter_active
+    if 'link_educator_active' in st.session_state:
+        del st.session_state.link_educator_active
 
     # Clear camera initialization state
     if 'camera_initialized' in st.session_state:
@@ -135,7 +136,7 @@ def admin_portal():
         st.session_state.current_page = "Student Registrations"
 
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Student Registrations", "Access Codes", "Virtual Painter"])
+    page = st.sidebar.radio("Go to", ["Student Registrations", "Access Codes", "Beyond The Brush App"])
 
     # Update current page in session state
     st.session_state.current_page = page
@@ -174,13 +175,13 @@ def admin_portal():
         st.stop()
 
     # Clear virtual painter state when switching to other pages
-    if page != "Virtual Painter" and st.session_state.get('virtual_painter_active'):
+    if page != "Beyond The Brush App" and st.session_state.get('link_educator_active'):
         clear_session_state()
-        st.session_state.virtual_painter_active = False
+        st.session_state.link_educator_active = False
         st.rerun()
 
     if page == "Student Registrations":
-        st.session_state.virtual_painter_active = False
+        st.session_state.link_educator_active = False
         st.title("Student Registrations")
 
         with get_mongodb_connection() as (students_collection, _):
@@ -226,7 +227,7 @@ def admin_portal():
                 st.info("No students registered yet.")
 
     elif page == "Access Codes":
-        st.session_state.virtual_painter_active = False
+        st.session_state.link_educator_active = False
         st.title("Access Codes Management")
         
 
@@ -352,10 +353,9 @@ def admin_portal():
             st.error(f"An error occurred while accessing the database: {str(e)}")
             st.info("Please try refreshing the page or contact support if the issue persists.")
 
-    elif page == "Virtual Painter":
-        st.session_state.virtual_painter_active = True
-        st.title("Virtual Painter")
-        run_virtual_painter()
+    elif page == "Beyond The Brush App":
+        st.session_state.link_educator_active = True
+        run_link_educator()
 
 
 

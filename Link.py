@@ -1,0 +1,54 @@
+import streamlit as st
+import os
+import sys
+import platform
+import subprocess
+from pathlib import Path
+
+def download_app():
+    """Provide download link for the appropriate app version based on OS"""
+    
+    system = platform.system()
+    if system == "Windows":
+        file_name = "BeyondTheBrush_Windows.exe"
+        button_text = "Download for Windows"
+    elif system == "Darwin":  # macOS
+        file_name = "BeyondTheBrush_macOS.dmg"
+        button_text = "Download for macOS"
+    elif system == "Linux":
+        file_name = "BeyondTheBrush_Linux"
+        button_text = "Download for Linux"
+    else:
+        st.error("Unsupported operating system")
+        return
+    
+    # This would be the URL to your actual hosted file
+    download_url = f"https://your-download-url.com/{file_name}"
+    
+    st.markdown(
+        f"""
+        <a href="{download_url}" download>
+            <button style="background-color: #4CAF50; color: white; padding: 10px 20px; 
+                         border: none; border-radius: 4px; cursor: pointer; font-size: 16px;">
+                {button_text}
+            </button>
+        </a>
+        """,
+        unsafe_allow_html=True
+    )
+
+def run_link():
+    """Main function to run the download interface"""
+    st.write("Download the latest version of Beyond The Brush for your operating system.")
+    
+    download_app()
+    
+    st.markdown("---")
+    st.markdown("System Requirements")
+    st.markdown("""
+    - **Webcam**: Required for hand tracking
+    - **Internet Connection**: Required for initial setup and updates
+    """)
+
+if __name__ == "__main__":
+    run_link()
