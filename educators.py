@@ -14,7 +14,6 @@ except ImportError as e:
         st.error("Link Educator module not available in this build.")
         st.info("Please ensure all dependencies are properly included.")
 
-
 st.set_page_config(
     page_title="Educator Portal",
     page_icon="static/icons.png",
@@ -39,7 +38,6 @@ st.markdown(
 # Initialize session state for Virtual Painter if not exists
 if 'link_educator_active' not in st.session_state:
     st.session_state.link_educator_active = False
-
 
 @contextmanager
 def get_mongodb_connection():
@@ -71,7 +69,10 @@ def get_mongodb_connection():
         db = client["beyond_the_brush"]
         students_collection = db["students"]
         access_codes_collection = db["access_codes"]
-        yield students_collection, access_codes_collection
+        courses_collection = db["courses"]
+        blocks_collection = db["blocks"]
+        year_levels_collection = db["year_levels"]
+        yield students_collection, access_codes_collection, courses_collection, blocks_collection, year_levels_collection
     except Exception as e:
         st.error(f"MongoDB connection failed: {str(e)}")
         st.error("Please check your internet connection and MongoDB Atlas settings.")
@@ -79,7 +80,6 @@ def get_mongodb_connection():
     finally:
         if client:
             client.close()
-
 
 def clear_session_state():
     """Clear all session state variables and release resources"""
@@ -124,6 +124,188 @@ def clear_session_state():
     if user_type:
         st.session_state.user_type = user_type
 
+def manage_courses():
+    st.subheader("Manage Courses")
+    with get_mongodb_connection() as (_, _, courses_collection, _, _):
+        # Display existing courses
+        courses = list(courses_collection.find())
+        
+        if courses:
+            for course in courses:
+                col1, col2, col3 = st.columns([4, 1, 1])
+                with col1:
+                    st.write(f"**{course['name']}**")
+                with col2:
+                    if st.button(f"Edit {course['name']}", key=f"edit_course_{course['_id']}"):
+                        st.session_state['editing_course'] = course['_id']
+                with col3:
+                    if st.button(f"Delete {course['name']}", key=f"delete_course_{course['_id']}"):
+                        courses_collection.delete_one({"_id": course["_id"]})
+                        st.rerun()
+
+            # Show edit form if a course is being edited
+            if 'editing_course' in st.session_state:
+                course_to_edit = next((c for c in courses if c['_id'] == st.session_state['editing_course']), None)
+                if course_to_edit:
+                    with st.form(key=f"edit_course_form_{course_to_edit['_id']}"):
+                        new_name = st.text_input("Course Name", value=course_to_edit['name'])
+                        submit_edit = st.form_submit_button("Save Changes")
+                        cancel_edit = st.form_submit_button("Cancel")
+
+                        if submit_edit and new_name:
+                            courses_collection.update_one(
+                                {"_id": course_to_edit["_id"]},
+                                {"$set": {"name": new_name}}
+                            )
+                            del st.session_state['editing_course']
+                            st.success("Course updated successfully!")
+                            st.rerun()
+
+                        if cancel_edit:
+                            del st.session_state['editing_course']
+                            st.rerun()
+        else:
+            st.info("No courses available.")
+
+        # Add new course
+        with st.form("add_course_form"):
+            new_course = st.text_input("New Course Name")
+            submit_course = st.form_submit_button("Add Course")
+            
+            if submit_course and new_course:
+                if not new_course.strip():
+                    st.warning("Course name cannot be empty!")
+                else:
+                    # Check if course already exists
+                    existing_course = courses_collection.find_one({"name": new_course.strip()})
+                    if existing_course:
+                        st.warning(f"Course '{new_course}' already exists!")
+                    else:
+                        courses_collection.insert_one({"name": new_course.strip()})
+                        st.success(f"Course '{new_course}' added successfully!")
+                        st.rerun()
+
+def manage_blocks():
+    st.subheader("Manage Blocks")
+    with get_mongodb_connection() as (_, _, _, blocks_collection, _):
+        # Display existing blocks
+        blocks = list(blocks_collection.find())
+        
+        if blocks:
+            for block in blocks:
+                col1, col2, col3 = st.columns([4, 1, 1])
+                with col1:
+                    st.write(f"**{block['name']}**")
+                with col2:
+                    if st.button(f"Edit {block['name']}", key=f"edit_block_{block['_id']}"):
+                        st.session_state['editing_block'] = block['_id']
+                with col3:
+                    if st.button(f"Delete {block['name']}", key=f"delete_block_{block['_id']}"):
+                        blocks_collection.delete_one({"_id": block["_id"]})
+                        st.rerun()
+
+            # Show edit form if a block is being edited
+            if 'editing_block' in st.session_state:
+                block_to_edit = next((b for b in blocks if b['_id'] == st.session_state['editing_block']), None)
+                if block_to_edit:
+                    with st.form(key=f"edit_block_form_{block_to_edit['_id']}"):
+                        new_name = st.text_input("Block Name", value=block_to_edit['name'])
+                        submit_edit = st.form_submit_button("Save Changes")
+                        cancel_edit = st.form_submit_button("Cancel")
+
+                        if submit_edit and new_name:
+                            blocks_collection.update_one(
+                                {"_id": block_to_edit["_id"]},
+                                {"$set": {"name": new_name}}
+                            )
+                            del st.session_state['editing_block']
+                            st.success("Block updated successfully!")
+                            st.rerun()
+
+                        if cancel_edit:
+                            del st.session_state['editing_block']
+                            st.rerun()
+        else:
+            st.info("No blocks available.")
+
+        # Add new block
+        with st.form("add_block_form"):
+            new_block = st.text_input("New Block Name")
+            submit_block = st.form_submit_button("Add Block")
+            
+            if submit_block and new_block:
+                if not new_block.strip():
+                    st.warning("Block name cannot be empty!")
+                else:
+                    # Check if block already exists
+                    existing_block = blocks_collection.find_one({"name": new_block.strip()})
+                    if existing_block:
+                        st.warning(f"Block '{new_block}' already exists!")
+                    else:
+                        blocks_collection.insert_one({"name": new_block.strip()})
+                        st.success(f"Block '{new_block}' added successfully!")
+                        st.rerun()
+
+def manage_year_levels():
+    st.subheader("Manage Year Levels")
+    with get_mongodb_connection() as (_, _, _, _, year_levels_collection):
+        # Display existing year levels
+        year_levels = list(year_levels_collection.find())
+        
+        if year_levels:
+            for level in year_levels:
+                col1, col2, col3 = st.columns([4, 1, 1])
+                with col1:
+                    st.write(f"**{level['name']}**")
+                with col2:
+                    if st.button(f"Edit {level['name']}", key=f"edit_level_{level['_id']}"):
+                        st.session_state['editing_level'] = level['_id']
+                with col3:
+                    if st.button(f"Delete {level['name']}", key=f"delete_level_{level['_id']}"):
+                        year_levels_collection.delete_one({"_id": level["_id"]})
+                        st.rerun()
+
+            # Show edit form if a year level is being edited
+            if 'editing_level' in st.session_state:
+                level_to_edit = next((l for l in year_levels if l['_id'] == st.session_state['editing_level']), None)
+                if level_to_edit:
+                    with st.form(key=f"edit_level_form_{level_to_edit['_id']}"):
+                        new_name = st.text_input("Year Level Name", value=level_to_edit['name'])
+                        submit_edit = st.form_submit_button("Save Changes")
+                        cancel_edit = st.form_submit_button("Cancel")
+
+                        if submit_edit and new_name:
+                            year_levels_collection.update_one(
+                                {"_id": level_to_edit["_id"]},
+                                {"$set": {"name": new_name}}
+                            )
+                            del st.session_state['editing_level']
+                            st.success("Year level updated successfully!")
+                            st.rerun()
+
+                        if cancel_edit:
+                            del st.session_state['editing_level']
+                            st.rerun()
+        else:
+            st.info("No year levels available.")
+
+        # Add new year level
+        with st.form("add_level_form"):
+            new_level = st.text_input("New Year Level Name")
+            submit_level = st.form_submit_button("Add Year Level")
+            
+            if submit_level and new_level:
+                if not new_level.strip():
+                    st.warning("Year level name cannot be empty!")
+                else:
+                    # Check if year level already exists
+                    existing_level = year_levels_collection.find_one({"name": new_level.strip()})
+                    if existing_level:
+                        st.warning(f"Year level '{new_level}' already exists!")
+                    else:
+                        year_levels_collection.insert_one({"name": new_level.strip()})
+                        st.success(f"Year level '{new_level}' added successfully!")
+                        st.rerun()
 
 def admin_portal():
     # Check authentication state
@@ -136,13 +318,17 @@ def admin_portal():
         st.session_state.current_page = "Student Registrations"
 
     st.sidebar.title("Navigation")
-    page = st.sidebar.radio("Go to", ["Student Registrations", "Access Codes", "Beyond The Brush App"])
+    page = st.sidebar.radio("Go to", [
+        "Student Registrations", 
+        "Access Codes", 
+        "Manage Courses",
+        "Manage Blocks",
+        "Manage Year Levels",
+        "Beyond The Brush App"
+    ])
 
     # Update current page in session state
     st.session_state.current_page = page
-
-    # Debug information
-    st.sidebar.write(f"Current page: {page}")
 
     # Add logout button at the bottom of sidebar
     st.sidebar.markdown("---")  # Add a separator
@@ -184,7 +370,7 @@ def admin_portal():
         st.session_state.link_educator_active = False
         st.title("Student Registrations")
 
-        with get_mongodb_connection() as (students_collection, _):
+        with get_mongodb_connection() as (students_collection, _, _, _, _):
             # Display all registered students
             students = list(students_collection.find())
 
@@ -192,7 +378,9 @@ def admin_portal():
                 for student in students:
                     col1, col2, col3 = st.columns([4, 1, 1])
                     with col1:
-                        st.write(f"**{student['name']}** (Registered: {time.ctime(student['registered_at'])})")
+                        st.write(f"**{student['name']}**")
+                        st.caption(f"Course: {student.get('course', 'N/A')} | Block: {student.get('block', 'N/A')} | Year: {student.get('year_level', 'N/A')}")
+                        st.caption(f"Registered: {time.ctime(student['registered_at'])}")
                     with col2:
                         if st.button(f"Edit {student['name']}", key=f"edit_{student['_id']}"):
                             st.session_state['editing_student'] = student['_id']
@@ -208,13 +396,41 @@ def admin_portal():
                     if student_to_edit:
                         with st.form(key=f"edit_form_{student_to_edit['_id']}"):
                             new_name = st.text_input("New Name", value=student_to_edit['name'])
+                            
+                            # Get current options
+                            current_courses = [course["name"] for course in courses_collection.find()]
+                            current_blocks = [block["name"] for block in blocks_collection.find()]
+                            current_year_levels = [level["name"] for level in year_levels_collection.find()]
+                            
+                            # Create dropdowns with current values
+                            new_course = st.selectbox(
+                                "Course", 
+                                current_courses, 
+                                index=current_courses.index(student_to_edit.get('course', current_courses[0])) if student_to_edit.get('course') in current_courses else 0
+                            )
+                            new_block = st.selectbox(
+                                "Block", 
+                                current_blocks, 
+                                index=current_blocks.index(student_to_edit.get('block', current_blocks[0])) if student_to_edit.get('block') in current_blocks else 0
+                            )
+                            new_year = st.selectbox(
+                                "Year Level", 
+                                current_year_levels, 
+                                index=current_year_levels.index(student_to_edit.get('year_level', current_year_levels[0])) if student_to_edit.get('year_level') in current_year_levels else 0
+                            )
+                            
                             submit_edit = st.form_submit_button("Save Changes")
                             cancel_edit = st.form_submit_button("Cancel")
 
                             if submit_edit and new_name:
                                 students_collection.update_one(
                                     {"_id": student_to_edit["_id"]},
-                                    {"$set": {"name": new_name}}
+                                    {"$set": {
+                                        "name": new_name,
+                                        "course": new_course,
+                                        "block": new_block,
+                                        "year_level": new_year
+                                    }}
                                 )
                                 del st.session_state['editing_student']
                                 st.success("Student information updated successfully!")
@@ -229,11 +445,9 @@ def admin_portal():
     elif page == "Access Codes":
         st.session_state.link_educator_active = False
         st.title("Access Codes Management")
-        
-
 
         try:
-            with get_mongodb_connection() as (students_collection, access_codes_collection):
+            with get_mongodb_connection() as (students_collection, access_codes_collection, _, _, _):
                 # Display existing access codes
                 codes = list(access_codes_collection.find())
                 
@@ -262,6 +476,10 @@ def admin_portal():
                             status_color = "🟢" if code.get('is_active', True) else "🔴"
                             status_text = "Active" if code.get('is_active', True) else "Inactive"
                             st.write(f"{status_color} {status_text}")
+                            
+                            # Show code type (admin or student)
+                            code_type = "🔑 Admin" if code.get('is_admin_code', False) else "👨‍🎓 Student"
+                            st.write(code_type)
                         with col2:
                             created_time = time.ctime(code.get('created_at', 0))
                             st.write(f"Created: {created_time}")
@@ -307,12 +525,14 @@ def admin_portal():
                 st.subheader("Create New Access Code")
                 
                 with st.form("add_code_form"):
-                    col1, col2, col3 = st.columns([2, 1, 1])
+                    col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
                     with col1:
                         new_code = st.text_input("New Access Code", placeholder="")
                     with col2:
                         max_uses = st.number_input("Max Uses", min_value=1, value=100, help="Leave empty for unlimited uses")
                     with col3:
+                        is_admin_code = st.checkbox("Admin Code", help="Check this for educator/admin access only")
+                    with col4:
                         submit_code = st.form_submit_button("➕ Create Code", use_container_width=True)
                     
                     if submit_code and new_code:
@@ -336,12 +556,13 @@ def admin_portal():
                                     "created_at": time.time(),
                                     "educator_id": "Admin",
                                     "is_active": True,
+                                    "is_admin_code": is_admin_code,
                                     "max_uses": max_uses if max_uses > 0 else None,  # Unlimited uses if 0 or negative
                                     "description": f"Access code created by {st.session_state.get('username', 'Admin')}"
                                 })
                                 if result.inserted_id:
                                     st.success(f"✅ Access code '{new_code}' created successfully!")
-                                    st.info(f"Students can now use this code: **{new_code}**")
+                                    st.info(f"Code type: {'🔑 Admin' if is_admin_code else '👨‍🎓 Student'}")
                                     if max_uses and max_uses > 0:
                                         st.info(f"Maximum uses: {max_uses}")
                                     else:
@@ -353,12 +574,24 @@ def admin_portal():
             st.error(f"An error occurred while accessing the database: {str(e)}")
             st.info("Please try refreshing the page or contact support if the issue persists.")
 
+    elif page == "Manage Courses":
+        st.session_state.link_educator_active = False
+        st.title("Course Management")
+        manage_courses()
+
+    elif page == "Manage Blocks":
+        st.session_state.link_educator_active = False
+        st.title("Block Management")
+        manage_blocks()
+
+    elif page == "Manage Year Levels":
+        st.session_state.link_educator_active = False
+        st.title("Year Level Management")
+        manage_year_levels()
+
     elif page == "Beyond The Brush App":
         st.session_state.link_educator_active = True
         run_link_educator()
-
-
-
 
 if __name__ == "__main__":
     admin_portal()

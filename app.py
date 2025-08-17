@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pymongo import MongoClient
 from dotenv import load_dotenv
-from register import  students_collection, access_codes_collection
+from register import students_collection, access_codes_collection
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -37,6 +37,9 @@ try:
     db = client["beyond_the_brush"]
     students_collection = db["students"]
     access_codes_collection = db["access_codes"]
+    courses_collection = db["courses"]
+    blocks_collection = db["blocks"]
+    year_levels_collection = db["year_levels"]
 except Exception as e:
     st.error(f"MongoDB connection failed: {str(e)}")
     st.error("Please check your internet connection and MongoDB Atlas settings.")
@@ -49,7 +52,6 @@ if 'user_type' not in st.session_state:
     st.session_state.user_type = None
 if 'username' not in st.session_state:
     st.session_state.username = None
-
 
 # --- STYLING ---
 def load_css():
@@ -102,11 +104,9 @@ def load_css():
     </style>
     """, unsafe_allow_html=True)
 
-
 # --- UTILS ---
 def set_loading(state=True):
     st.session_state.is_loading = state
-
 
 def show_loading_screen(duration=2.0):
     set_loading(True)
@@ -114,16 +114,13 @@ def show_loading_screen(duration=2.0):
         time.sleep(duration)
     set_loading(False)
 
-
 def launch_link(role):
     if getattr(sys, 'frozen', False):
         subprocess.Popen([sys.executable, "Link.py", role])
     else:
         subprocess.Popen([sys.executable, "-m", "streamlit", "run", "Link.py", "--", role])
         time.sleep(1)
-
     st.markdown(f"""<meta http-equiv="refresh" content="0; url='./'">""", unsafe_allow_html=True)
-
 
 # --- VERIFICATION LOGIC ---
 def verify_code(code, role, name):
@@ -135,6 +132,17 @@ def verify_code(code, role, name):
             st.error("Invalid or inactive access code.")
             return
         
+        # Check code type matches user role
+        is_admin_code = code_data.get('is_admin_code', False)
+        
+        if role == "student" and is_admin_code:
+            st.error("Students cannot use admin access codes. Please use a student access code.")
+            return
+            
+        if role == "educator" and not is_admin_code:
+            st.error("Educators must use admin access codes. Please use an admin access code.")
+            return
+            
         if role == "student":
             # For students, check if they're already registered with this code
             student_data = students_collection.find_one({"access_code": code, "name": name})
@@ -168,7 +176,6 @@ def verify_code(code, role, name):
         st.error(f"Error during verification: {str(e)}")
         st.error("Please try again or contact support if the issue persists.")
 
-
 # --- MAIN ---
 def main():
     load_css()
@@ -192,7 +199,7 @@ def main():
                         verify_code(code, "student", name)
 
                 elif role == "Educator":
-                    code = st.text_input("Access code", type="password", key="admin_code")
+                    code = st.text_input("Admin access code", type="password", key="admin_code")
 
                     # Login button centered and blue
                     if st.button("Login", key="educator_login", type="primary"):
@@ -207,11 +214,9 @@ def main():
         elif st.session_state.user_type == "register":
             st.switch_page("pages/3_register.py")
 
-
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--painter":
         import Link
-
         if not st.session_state.get('access_granted'):
             st.error("Please authenticate from main screen.")
             st.stop()

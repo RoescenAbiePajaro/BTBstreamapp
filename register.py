@@ -33,11 +33,13 @@ try:
     db = client["beyond_the_brush"]
     access_codes_collection = db["access_codes"]
     students_collection = db["students"]
+    courses_collection = db["courses"]
+    blocks_collection = db["blocks"]
+    year_levels_collection = db["year_levels"]
 except Exception as e:
     st.error(f"MongoDB connection failed: {str(e)}")
     st.error("Please check your internet connection and MongoDB Atlas settings.")
     st.stop()
-
 
 def register_student():
     st.markdown("""
@@ -87,24 +89,40 @@ def register_student():
     st.title("Student Registration")
 
     with st.form("registration_form"):
-        name = st.text_input("Username", placeholder="Enter your Username")
-        access_code = st.text_input("Access Code", placeholder="Ask your educator for the access code")
+        name = st.text_input("Username", placeholder="Enter your Username (at least 8 characters)", max_chars=50)
+        
+        # Get available options from database
+        courses = [course["name"] for course in courses_collection.find()]
+        blocks = [block["name"] for block in blocks_collection.find()]
+        year_levels = [level["name"] for level in year_levels_collection.find()]
+        
+        # Create dropdowns
+        selected_course = st.selectbox("Course", courses)
+        selected_block = st.selectbox("Block", blocks)
+        selected_year = st.selectbox("Year Level", year_levels)
+        
+        access_code = st.text_input("Student Access Code", placeholder="Ask your educator for the student access code")
 
         submitted = st.form_submit_button("Register")
 
         if submitted:
             if not name or not access_code:
                 st.error("Please fill in all fields")
-            elif len(name) != 8:
-                st.error("Name must be exactly 8 characters long")
+            elif len(name) < 8:
+                st.error("Name must be at least 8 characters long")
             else:
                 # Check if name already exists
                 existing_student = students_collection.find_one({"name": name})
                 if existing_student:
                     st.warning("This name is already registered. Please use a different name.")
                 else:
-                    # Check if access code exists and is active in MongoDB
-                    code_data = access_codes_collection.find_one({"code": access_code.strip().upper(), "is_active": True})
+                    # Check if access code exists, is active, and is NOT an admin code
+                    code_data = access_codes_collection.find_one({
+                        "code": access_code.strip().upper(), 
+                        "is_active": True,
+                        "is_admin_code": False  # Ensure it's not an admin code
+                    })
+                    
                     if code_data:
                         # Check if max uses limit is reached
                         current_uses = students_collection.count_documents({"access_code": access_code.strip().upper()})
@@ -114,19 +132,22 @@ def register_student():
                             st.error(f"Access code '{access_code}' has reached its maximum usage limit ({max_uses} students).")
                             st.info("Please ask your educator for a new access code.")
                         else:
-                            # Register student
+                            # Register student with additional fields
                             student_data = {
                                 "name": name,
                                 "access_code": access_code.strip().upper(),
+                                "course": selected_course,
+                                "block": selected_block,
+                                "year_level": selected_year,
                                 "registered_at": time.time(),
-                                "educator_id": code_data.get("educator_id", "Admin"),
+                                "student_id": code_data.get("student_id", "Student"),
                                 "registration_date": time.strftime("%Y-%m-%d %H:%M:%S")
                             }
                             students_collection.insert_one(student_data)
                             st.success("Registration successful! You can now log in.")
                             st.info(f"Welcome, {name}! Use your name and access code '{access_code}' to log in.")
                     else:
-                        st.error("Invalid or inactive access code. Please ask your educator for a valid code.")
+                        st.error("Invalid, inactive, or admin access code. Please ask your educator for a valid student access code.")
                         st.info("Make sure the code is spelled correctly and hasn't expired.")
 
     # Add Back button
