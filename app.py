@@ -73,7 +73,8 @@ def load_css():
         border: 1px solid rgba(255,255,255,0.1);
     }
     .stButton > button {
-        background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+        background: #2575fc !important;
+        hover: #2575fc !important;
         color: white;
         border: none;
         padding: 12px;
@@ -199,7 +200,7 @@ def main():
                         verify_code(code, "student", name)
 
                 elif role == "Educator":
-                    code = st.text_input("Admin access code", type="password", key="admin_code")
+                    code = st.text_input("Access code", type="password", key="admin_code")
 
                     # Login button centered and blue
                     if st.button("Login", key="educator_login", type="primary"):

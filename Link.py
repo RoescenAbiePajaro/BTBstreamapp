@@ -1,17 +1,13 @@
 import streamlit as st
-import os
-import sys
 import platform
-import subprocess
-from pathlib import Path
 
 def download_app():
-    """Provide download link for the appropriate app version based on OS"""
+    st.markdown("### Download Beyond The Brush App")
     
     system = platform.system()
     if system == "Windows":
         file_name = "BeyondTheBrush_Windows.exe"
-        button_text = "Download for Windows"
+        button_text = "Download Now"
     elif system == "Darwin":  # macOS
         file_name = "BeyondTheBrush_macOS.dmg"
         button_text = "Download for macOS"
@@ -22,7 +18,6 @@ def download_app():
         st.error("Unsupported operating system")
         return
     
-    # This would be the URL to your actual hosted file
     download_url = f"https://your-download-url.com/{file_name}"
     
     st.markdown(
@@ -38,10 +33,33 @@ def download_app():
     )
 
 def run_link():
-    """Main function to run the download interface"""
-    st.write("Download the latest version of Beyond The Brush for your operating system.")
+    # Inject CSS to remove top margin/padding
+    st.markdown(
+        """
+        <style>
+        div.block-container {
+            padding-top: 0rem;
+        }
+        h1 {
+            margin-top: 0rem;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
+    st.title("Beyond The Brush App Download")
+    st.write("Download the latest version of Beyond The Brush")
     
     download_app()
+
+    st.markdown("---")
+    st.markdown("Guide Steps")
+    st.markdown("""
+    - **Step 1**: You are registered,next is to download the application by clicking the download button.
+    - **Step 2**: When done downloading, open the application.
+    - **Step 3**: Fill up information you registered and click on the enter button.
+    """)
     
     st.markdown("---")
     st.markdown("System Requirements")

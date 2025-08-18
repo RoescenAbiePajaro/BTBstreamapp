@@ -1,4 +1,4 @@
-# register.py
+# register.py 1
 import streamlit as st
 from pymongo import MongoClient
 import time
@@ -52,7 +52,8 @@ def register_student():
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
     .stButton > button {
-        background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+        background: #2575fc !important;
+        hover: #2575fc !important;
         color: white;
         border: none;
         padding: 12px 28px;

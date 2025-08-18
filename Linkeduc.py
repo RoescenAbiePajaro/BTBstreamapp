@@ -12,7 +12,7 @@ def download_app():
     system = platform.system()
     if system == "Windows":
         file_name = "BeyondTheBrush_Windows.exe"
-        button_text = "Download for Windows"
+        button_text = "Download Now"
     elif system == "Darwin":  # macOS
         file_name = "BeyondTheBrush_macOS.dmg"
         button_text = "Download for macOS"
@@ -41,12 +41,20 @@ def download_app():
 def run_link_educator():
     """Main function to run the download interface"""
     st.title("Beyond The Brush App Download")
-    st.write("Download the latest version of Beyond The Brush for your operating system.")
+    st.write("Download the latest version of Beyond The Brush")
     
     download_app()
+    st.markdown("---")
+    st.markdown("Guide Steps")
+    st.markdown("""
+    - **Step 1**: Download the application by clicking the download button.
+    - **Step 2**: When done dowloading,open the application.
+    - **Step 3**: Enter Admin access code and click on the enter button.
+
+    """)
     
     st.markdown("---")
-    st.markdown("### System Requirements")
+    st.markdown("System Requirements")
     st.markdown("""
     - **Webcam**: Required for hand tracking
     - **Internet Connection**: Required for initial setup and updates
