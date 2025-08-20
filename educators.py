@@ -30,6 +30,61 @@ st.markdown(
         height: 10px;
         border-radius: 5px;
     }
+    
+    /* Card-like containers */
+    .container {
+        background-color: #ffffff;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 10px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Button styling */
+    .stButton > button {
+        width: 100%;
+        border-radius: 5px;
+        height: 38px;
+        padding: 0 16px;
+    }
+    
+    /* Form fields */
+    .stTextInput > div > div > input {
+        border-radius: 5px;
+    }
+    
+    /* Metrics */
+    .css-1r6slb0 {
+        background-color: #f0f2f6;
+        border-radius: 5px;
+        padding: 10px;
+    }
+    
+    /* Headers */
+    h1, h2, h3 {
+        margin-bottom: 1rem;
+    }
+    
+    /* Columns spacing */
+    .row-widget.stRadio > div {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    /* Navigation sidebar */
+    .css-1d391kg {
+        padding: 1rem;
+    }
+    
+    /* Status indicators */
+    .status-active {
+        color: #09ab3b;
+        font-weight: bold;
+    }
+    .status-inactive {
+        color: #ff4b4b;
+        font-weight: bold;
+    }
     </style>
     """,
     unsafe_allow_html=True,
@@ -391,54 +446,54 @@ def admin_portal():
 
                 # Show edit form if a student is being edited
                 if 'editing_student' in st.session_state:
-                    student_to_edit = next((s for s in students if s['_id'] == st.session_state['editing_student']),
-                                           None)
+                    student_to_edit = next((s for s in students if s['_id'] == st.session_state['editing_student']), None)
                     if student_to_edit:
-                        with st.form(key=f"edit_form_{student_to_edit['_id']}"):
-                            new_name = st.text_input("New Name", value=student_to_edit['name'])
-                            
-                            # Get current options
-                            current_courses = [course["name"] for course in courses_collection.find()]
-                            current_blocks = [block["name"] for block in blocks_collection.find()]
-                            current_year_levels = [level["name"] for level in year_levels_collection.find()]
-                            
-                            # Create dropdowns with current values
-                            new_course = st.selectbox(
-                                "Course", 
-                                current_courses, 
-                                index=current_courses.index(student_to_edit.get('course', current_courses[0])) if student_to_edit.get('course') in current_courses else 0
-                            )
-                            new_block = st.selectbox(
-                                "Block", 
-                                current_blocks, 
-                                index=current_blocks.index(student_to_edit.get('block', current_blocks[0])) if student_to_edit.get('block') in current_blocks else 0
-                            )
-                            new_year = st.selectbox(
-                                "Year Level", 
-                                current_year_levels, 
-                                index=current_year_levels.index(student_to_edit.get('year_level', current_year_levels[0])) if student_to_edit.get('year_level') in current_year_levels else 0
-                            )
-                            
-                            submit_edit = st.form_submit_button("Save Changes")
-                            cancel_edit = st.form_submit_button("Cancel")
-
-                            if submit_edit and new_name:
-                                students_collection.update_one(
-                                    {"_id": student_to_edit["_id"]},
-                                    {"$set": {
-                                        "name": new_name,
-                                        "course": new_course,
-                                        "block": new_block,
-                                        "year_level": new_year
-                                    }}
+                        with get_mongodb_connection() as (_, _, courses_collection, blocks_collection, year_levels_collection):
+                            with st.form(key=f"edit_form_{student_to_edit['_id']}"):
+                                new_name = st.text_input("New Name", value=student_to_edit['name'])
+                                
+                                # Get current options
+                                current_courses = [course["name"] for course in courses_collection.find()]
+                                current_blocks = [block["name"] for block in blocks_collection.find()]
+                                current_year_levels = [level["name"] for level in year_levels_collection.find()]
+                                
+                                # Create dropdowns with current values
+                                new_course = st.selectbox(
+                                    "Course", 
+                                    options=current_courses,
+                                    index=current_courses.index(student_to_edit.get('course', current_courses[0])) if student_to_edit.get('course') in current_courses else 0
                                 )
-                                del st.session_state['editing_student']
-                                st.success("Student information updated successfully!")
-                                st.rerun()
+                                new_block = st.selectbox(
+                                    "Block", 
+                                    options=current_blocks,
+                                    index=current_blocks.index(student_to_edit.get('block', current_blocks[0])) if student_to_edit.get('block') in current_blocks else 0
+                                )
+                                new_year = st.selectbox(
+                                    "Year Level", 
+                                    options=current_year_levels,
+                                    index=current_year_levels.index(student_to_edit.get('year_level', current_year_levels[0])) if student_to_edit.get('year_level') in current_year_levels else 0
+                                )
+                                
+                                submit_edit = st.form_submit_button("Save Changes")
+                                cancel_edit = st.form_submit_button("Cancel")
 
-                            if cancel_edit:
-                                del st.session_state['editing_student']
-                                st.rerun()
+                                if submit_edit and new_name:
+                                    students_collection.update_one(
+                                        {"_id": student_to_edit["_id"]},
+                                        {"$set": {
+                                            "name": new_name,
+                                            "course": new_course,
+                                            "block": new_block,
+                                            "year_level": new_year
+                                        }}
+                                    )
+                                    del st.session_state['editing_student']
+                                    st.success("Student information updated successfully!")
+                                    st.rerun()
+
+                                if cancel_edit:
+                                    del st.session_state['editing_student']
+                                    st.rerun()
             else:
                 st.info("No students registered yet.")
 
@@ -525,16 +580,26 @@ def admin_portal():
                 st.subheader("Create New Access Code")
                 
                 with st.form("add_code_form"):
-                    col1, col2, col3, col4 = st.columns([2, 1, 1, 1])
+                    # Change columns ratio for better alignment
+                    col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
                     with col1:
-                        new_code = st.text_input("New Access Code", placeholder="")
+                        new_code = st.text_input("New Access Code", 
+                            placeholder="Enter access code",
+                            help="Code must be at least 3 characters long")
                     with col2:
-                        max_uses = st.number_input("Max Uses", min_value=1, value=100, help="Leave empty for unlimited uses")
+                        max_uses = st.number_input("Max Uses", 
+                            min_value=1, 
+                            value=100,
+                            help="Maximum number of times this code can be used")
                     with col3:
-                        is_admin_code = st.checkbox("Admin Code", help="Check this for educator/admin access only")
+                        is_admin_code = st.checkbox("Admin Code", 
+                            help="Check this for educator/admin access only",
+                            key="admin_code_checkbox")
                     with col4:
-                        submit_code = st.form_submit_button("➕ Create Code", use_container_width=True)
-                    
+                        # Remove use_container_width to prevent stretching
+                        submit_code = st.form_submit_button("Create Code")
+
+                    # Rest of the validation code remains the same
                     if submit_code and new_code:
                         # Trim whitespace and validate
                         new_code = new_code.strip().upper()  # Convert to uppercase for consistency

@@ -85,8 +85,16 @@ def load_css():
         transition: all 0.2s ease-in-out;
     }
     .stRadio > div {
+        display: flex;
         justify-content: center;
-        gap: 2rem;
+        gap: 1rem !important;  /* Reduced from 2rem to 1rem */
+    }
+    .stRadio > div > div {
+        display: flex;
+        gap: 1rem !important;
+    }
+    .stRadio label {
+        padding: 0 0.5rem;  /* Add some padding around radio labels */
     }
     /* Progress bar */
     .stProgress > div > div > div > div {
