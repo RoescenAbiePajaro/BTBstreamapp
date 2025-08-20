@@ -533,8 +533,25 @@ def admin_portal():
 
         try:
             with get_mongodb_connection() as (students_collection, access_codes_collection, _, _, _):
-                # Display existing access codes
-                codes = list(access_codes_collection.find())
+                # Add search and filter section
+                col1, col2 = st.columns([3, 2])
+                with col1:
+                    search_query = st.text_input("🔍 Search access codes", "")
+                with col2:
+                    status_filter = st.selectbox(
+                        "Filter by Status",
+                        ["All", "Active", "Inactive"]
+                    )
+
+                # Build query based on search and filter
+                query = {}
+                if search_query:
+                    query["code"] = {"$regex": search_query, "$options": "i"}  # Case-insensitive search
+                if status_filter != "All":
+                    query["is_active"] = True if status_filter == "Active" else False
+
+                # Display existing access codes with filters applied
+                codes = list(access_codes_collection.find(query))
                 
                 # Get student count for each code
                 student_counts = {}
@@ -548,11 +565,10 @@ def admin_portal():
                             student_counts[code["code"]] = 0
                 except Exception as e:
                     st.warning(f"Could not retrieve student counts: {str(e)}")
-                    # Set default counts to 0
                     student_counts = {code["code"]: 0 for code in codes}
 
                 if codes:
-                    st.subheader("Available Access Codes")
+                    st.subheader(f"Available Access Codes ({len(codes)} found)")
                     for code in codes:
                         col1, col2, col3, col4, col5 = st.columns([2, 2, 2, 1, 1])
                         with col1:
