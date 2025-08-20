@@ -425,11 +425,41 @@ def admin_portal():
         st.session_state.link_educator_active = False
         st.title("Student Registrations")
 
-        with get_mongodb_connection() as (students_collection, _, _, _, _):
-            # Display all registered students
-            students = list(students_collection.find())
+        with get_mongodb_connection() as (students_collection, _, courses_collection, blocks_collection, year_levels_collection):
+            # Add search and filter section
+            col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
+            
+            with col1:
+                search_query = st.text_input("🔍 Search students by name", "")
+            
+            # Get all available options for filters
+            courses = ["All"] + [course["name"] for course in courses_collection.find()]
+            blocks = ["All"] + [block["name"] for block in blocks_collection.find()]
+            year_levels = ["All"] + [level["name"] for level in year_levels_collection.find()]
+            
+            with col2:
+                course_filter = st.selectbox("Filter by Course", courses)
+            with col3:
+                block_filter = st.selectbox("Filter by Block", blocks)
+            with col4:
+                year_filter = st.selectbox("Filter by Year Level", year_levels)
+
+            # Build query based on filters
+            query = {}
+            if search_query:
+                query["name"] = {"$regex": search_query, "$options": "i"}  # Case-insensitive search
+            if course_filter != "All":
+                query["course"] = course_filter
+            if block_filter != "All":
+                query["block"] = block_filter
+            if year_filter != "All":
+                query["year_level"] = year_filter
+
+            # Display all registered students with filters applied
+            students = list(students_collection.find(query))
 
             if students:
+                st.write(f"Found {len(students)} student(s)")
                 for student in students:
                     col1, col2, col3 = st.columns([4, 1, 1])
                     with col1:
@@ -579,27 +609,39 @@ def admin_portal():
                 # Add new access code
                 st.subheader("Create New Access Code")
                 
-                with st.form("add_code_form"):
-                    # Change columns ratio for better alignment
-                    col1, col2, col3, col4 = st.columns([3, 2, 2, 2])
-                    with col1:
-                        new_code = st.text_input("New Access Code", 
-                            placeholder="Enter access code",
-                            help="Code must be at least 3 characters long")
-                    with col2:
-                        max_uses = st.number_input("Max Uses", 
-                            min_value=1, 
-                            value=100,
-                            help="Maximum number of times this code can be used")
-                    with col3:
-                        is_admin_code = st.checkbox("Admin Code", 
-                            help="Check this for educator/admin access only",
-                            key="admin_code_checkbox")
-                    with col4:
-                        # Remove use_container_width to prevent stretching
-                        submit_code = st.form_submit_button("Create Code")
+                with st.form("add_code_form", clear_on_submit=True):
+                    # Use container for better styling
+                    with st.container():
+                        # Adjust column ratios for better spacing
+                        col1, col2 = st.columns([1, 1])
+                        
+                        with col1:
+                            new_code = st.text_input(
+                                "Access Code", 
+                                placeholder="Enter code (min. 3 chars)",
+                                help="Code must be at least 3 characters long"
+                            )
+                            is_admin_code = st.checkbox(
+                                "Make this an admin code", 
+                                help="Check this for educator/admin access only",
+                                key="admin_code_checkbox"
+                            )
+                        
+                        with col2:
+                            max_uses = st.number_input(
+                                "Maximum Uses", 
+                                min_value=1, 
+                                value=100,
+                                help="Maximum number of times this code can be used"
+                            )
+                            st.markdown("<div style='margin-top: 1rem;'></div>", unsafe_allow_html=True)
+                            submit_code = st.form_submit_button(
+                                "Create Access Code",
+                                use_container_width=True,
+                                type="primary"
+                            )
 
-                    # Rest of the validation code remains the same
+                    # Rest of validation code remains the same
                     if submit_code and new_code:
                         # Trim whitespace and validate
                         new_code = new_code.strip().upper()  # Convert to uppercase for consistency
