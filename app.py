@@ -134,6 +134,11 @@ def launch_link(role):
 # --- VERIFICATION LOGIC ---
 def verify_code(code, role, name):
     try:
+        # Validate access code format
+        if not code.isalnum() or not all(c.isupper() or c.isdigit() for c in code):
+            st.error("Access code can only contain numbers and capital letters.")
+            return
+            
         # Check if access code exists and is active
         code_data = access_codes_collection.find_one({"code": code, "is_active": True})
         

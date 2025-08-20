@@ -111,6 +111,9 @@ def register_student():
                 st.error("Please fill in all fields")
             elif len(name) < 8:
                 st.error("Name must be at least 8 characters long")
+            # Add access code format validation
+            elif not access_code.isalnum() or not all(c.isupper() or c.isdigit() for c in access_code):
+                st.error("Access code can only contain numbers and capital letters.")
             else:
                 # Check if name already exists
                 existing_student = students_collection.find_one({"name": name})
@@ -119,7 +122,7 @@ def register_student():
                 else:
                     # Check if access code exists, is active, and is NOT an admin code
                     code_data = access_codes_collection.find_one({
-                        "code": access_code.strip().upper(), 
+                        "code": access_code.strip().upper(),
                         "is_active": True,
                         "is_admin_code": False  # Ensure it's not an admin code
                     })
