@@ -6,7 +6,7 @@ def download_app():
     
     system = platform.system()
     if system == "Windows":
-        file_name = "BeyondTheBrush_Windows.exe"
+        file_name = "beyond_the_brush_setup.exe"
         button_text = "Download Now"
     elif system == "Darwin":  # macOS
         file_name = "BeyondTheBrush_macOS.dmg"
