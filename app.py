@@ -6,6 +6,8 @@ import sys
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from register import students_collection, access_codes_collection
+import base64
+import os
 
 # --- PAGE CONFIG ---
 st.set_page_config(
@@ -14,6 +16,8 @@ st.set_page_config(
     layout="centered",
     initial_sidebar_state="collapsed"
 )
+
+# --- ENV + DB CONNECTION ---
 
 # --- ENV + DB CONNECTION ---
 load_dotenv()
@@ -60,7 +64,14 @@ def load_css():
     body {
         background-color: #0E1117;
         color: white;
+        margin: 0;
     }
+                
+    .st-emotion-cache-1w723zb {
+    width: 100%;
+    padding: 5rem 1rem 10rem;
+    max-width: 736px;
+}
     h1, h3 {
         text-align: center;
         color: white;
@@ -71,30 +82,32 @@ def load_css():
         border-radius: 8px;
         padding: 10px;
         border: 1px solid rgba(255,255,255,0.1);
+        width: 100%;
     }
     .stButton > button {
         background: #2575fc !important;
-        hover: #2575fc !important;
         color: white;
         border: none;
-        padding: 12px;
-        border-radius: 8px;
+        padding: 12px 28px;
+        font-size: 16px;
         font-weight: 600;
-        box-shadow: 0 4px 15px rgba(106, 17, 203, 0.3);
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.3s ease;
         width: 100%;
-        transition: all 0.2s ease-in-out;
+        margin-top: 1rem;
+        box-shadow: 0 4px 15px rgba(106, 17, 203, 0.3);
     }
+    /* Center radio buttons */
     .stRadio > div {
+        flex-direction: row;
         display: flex;
         justify-content: center;
-        gap: 1rem !important;  /* Reduced from 2rem to 1rem */
-    }
-    .stRadio > div > div {
-        display: flex;
         gap: 1rem !important;
+        margin-left: 65px;
     }
-    .stRadio label {
-        padding: 0 0.5rem;  /* Add some padding around radio labels */
+    .stRadio > div > label {
+        margin: 0;
     }
     /* Progress bar */
     .stProgress > div > div > div > div {
@@ -109,6 +122,37 @@ def load_css():
     }
     .blue-button {
         background-color: #2575fc !important;
+    }
+    /* Additional styling for better centering */
+    .main .block-container {
+        padding-top: 2rem;
+    }
+    /* Input field container */
+    .stTextInput {
+        width: 100%;
+        margin-top: 0px;
+    }
+    /* Center the button container */
+    .centered-button {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+    /* Logo styling */
+    .logo-container {
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .logo-img {
+        height: 80px;
+        margin-bottom: 5px;
+    }
+    .title {
+        font-weight: normal;
+        text-align: center;
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: white;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -130,6 +174,12 @@ def launch_link(role):
         subprocess.Popen([sys.executable, "-m", "streamlit", "run", "Link.py", "--", role])
         time.sleep(1)
     st.markdown(f"""<meta http-equiv="refresh" content="0; url='./'">""", unsafe_allow_html=True)
+
+# Function to encode local image to base64
+def get_base64_of_bin_file(bin_file):
+    with open(bin_file, 'rb') as f:
+        data = f.read()
+    return base64.b64encode(data).decode()
 
 # --- VERIFICATION LOGIC ---
 def verify_code(code, role, name):
@@ -194,29 +244,72 @@ def verify_code(code, role, name):
 def main():
     load_css()
 
-    if not st.session_state.authenticated:
-        st.title("Beyond The Brush")
+    # Display the logo using base64 encoding for better reliability
+    try:
+        # Check if icons.png exists in the current directory
+        if os.path.exists("icons.png"):
+            logo_base64 = get_base64_of_bin_file("icons.png")
+            st.markdown(
+                f"""
+                <div class="logo-container">
+                    <img src="data:image/png;base64,{logo_base64}" alt="Logo" class="logo-img">
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+        else:
+            # Fallback if logo can't be found
+            st.markdown(
+                """
+                <div class="logo-container">
+                    <h1>Beyond The Brush</h1>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+    except Exception as e:
+        # Fallback if logo can't be loaded
+        st.markdown(
+            """
+            <div class="logo-container">
+                <h1>Beyond The Brush</h1>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
 
+    # Display the title (always show this)
+    st.markdown("""
+    <div style="text-align: center;">
+        <h1 style='font-weight: normal; margin-top: 0;'>Beyond The Brush</h1>
+    </div>
+""", unsafe_allow_html=True)
+
+    if not st.session_state.authenticated:
         # Create a centered container for the login form
         with st.container():
-            col1, col2, col3 = st.columns([1, 2, 1])
+            col1, col2, col3 = st.columns([1, 2, 1])  # Adjusted column ratios for better centering
             
             with col2:  # Center column
-                role = st.radio("", ["Student", "Educator"], key="role_radio", label_visibility="collapsed")
+                # Create a custom radio button layout
+                st.markdown('<div class="centered-radio">', unsafe_allow_html=True)
+                role = st.radio("", ["Student", "Educator"], key="role_radio", 
+                               label_visibility="collapsed", horizontal=True)
+                st.markdown('</div>', unsafe_allow_html=True)
 
                 if role == "Student":
-                    name = st.text_input("Enter your name", placeholder="", key="name_input")
-                    code = st.text_input("Access code", placeholder="", type="password", key="access_code")
+                    name = st.text_input("Enter your name:", placeholder="", key="name_input")
+                    code = st.text_input("Access code:", placeholder="", type="password", key="access_code")
 
-                    # Login button centered and blue
-                    if st.button("Login", key="student_login", type="primary"):
+                    # Login button centered and full width
+                    if st.button("Login", key="student_login", type="primary", use_container_width=True):
                         verify_code(code, "student", name)
 
                 elif role == "Educator":
-                    code = st.text_input("Access code", type="password", key="admin_code")
+                    code = st.text_input("Access code:", type="password", key="admin_code")
 
-                    # Login button centered and blue
-                    if st.button("Login", key="educator_login", type="primary"):
+                    # Login button centered and full width
+                    if st.button("Login", key="educator_login", type="primary", use_container_width=True):
                         verify_code(code, "educator", "")
 
     else:

@@ -5,6 +5,12 @@ import time
 from pymongo import MongoClient
 from contextlib import contextmanager
 
+st.set_page_config(
+    page_title="Educator",
+    page_icon="static/icons.png",
+    layout="centered",
+)
+
 # Import Links with error handling for PyInstaller compatibility
 try:
     from Linkeduc import run_link_educator
@@ -30,6 +36,13 @@ st.markdown(
         height: 10px;
         border-radius: 5px;
     }
+
+    body {
+        background-color: #0E1117;
+        color: white;
+        
+    }
+
     
     /* Card-like containers */
     .container {
@@ -46,6 +59,7 @@ st.markdown(
         border-radius: 5px;
         height: 38px;
         padding: 0 16px;
+        
     }
     
     /* Form fields */
@@ -374,12 +388,12 @@ def admin_portal():
 
     st.sidebar.title("Navigation")
     page = st.sidebar.radio("Go to", [
+        "Beyond The Brush App",
         "Student Registrations", 
         "Access Codes", 
         "Manage Courses",
         "Manage Blocks",
-        "Manage Year Levels",
-        "Beyond The Brush App"
+        "Manage Year Levels"
     ])
 
     # Update current page in session state

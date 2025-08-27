@@ -51,6 +51,12 @@ def register_student():
         border-radius: 8px !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
+                
+                 /* Main container adjustments */
+    .main .block-container {
+        padding-top: 2rem;
+        padding-bottom: 0rem;
+    }
     .stButton > button {
         background: #2575fc !important;
         hover: #2575fc !important;
