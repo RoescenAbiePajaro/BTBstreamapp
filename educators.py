@@ -99,6 +99,13 @@ st.markdown(
         color: #ff4b4b;
         font-weight: bold;
     }
+
+    .st-emotion-cache-zy6yx3 {
+    width: 100%;
+    padding: 2rem 1rem 10rem;
+    max-width: initial;
+    min-width: auto;
+}
     </style>
     """,
     unsafe_allow_html=True,
