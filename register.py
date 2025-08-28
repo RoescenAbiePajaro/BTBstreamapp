@@ -52,11 +52,18 @@ def register_student():
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
                 
-                 /* Main container adjustments */
+    /* Main container adjustments */
     .main .block-container {
         padding-top: 2rem;
         padding-bottom: 0rem;
     }
+    
+    .st-emotion-cache-1w723zb {
+        width: 100%;
+        padding: 2rem 1rem 10rem;
+        max-width: 736px;
+    }
+    
     .stButton > button {
         background: #2575fc !important;
         hover: #2575fc !important;
