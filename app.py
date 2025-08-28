@@ -65,16 +65,13 @@ def load_css():
         background-color: #0E1117;
         color: white;
         margin: 0;
+        overflow-x: hidden;
     }
                 
-    .st-emotion-cache-1w723zb {
-    width: 100%;
-    padding: 5rem 1rem 10rem;
-    max-width: 736px;
-}
     h1, h3 {
         text-align: center;
         color: white;
+             margin: 0;
     }
     .stTextInput > div > div > input {
         background-color: rgba(30, 30, 47, 0.7) !important;
@@ -118,7 +115,8 @@ def load_css():
     .login-container {
         max-width: 400px;
         margin: 0 auto;
-        padding: 20px;
+        margin-bottom: 100px;
+        padding: 10px;
     }
     .blue-button {
         background-color: #2575fc !important;
