@@ -61,38 +61,81 @@ if 'username' not in st.session_state:
 def load_css():
     st.markdown("""
     <style>
-    body {
+    /* Reset all margins and paddings */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+    
+    /* Main container adjustments */
+    .st-emotion-cache-1w723zb {
+        width: 100%;
+        padding: 4rem 1rem 10rem !important;
+        max-width: 736px !important;
+        margin: 0 auto !important;
+    }
+    
+    /* Remove default Streamlit spacing and scroll */
+    .stApp {
         background-color: #0E1117;
         color: white;
-        margin: 0;
         overflow-x: hidden;
     }
-                
+    
+    /* Hide scrollbars but keep functionality */
+    ::-webkit-scrollbar {
+        display: none;
+    }
+    
+    /* Adjust form elements */
+    .stTextInput, .stSelectbox, .stTextArea {
+        margin: 0.25rem 0 !important;
+        width: 100% !important;
+    }
+    
+    /* Button adjustments */
+    .stButton > button {
+        margin: 0.5rem 0 !important;
+        width: 100% !important;
+    }
+    
+    /* Ensure body has no margin/padding */
+    body {
+        margin: 0;
+        padding: 0;
+        -ms-overflow-style: none;  /* IE and Edge */
+        scrollbar-width: none;  /* Firefox */
+    }
+    
     h1, h3 {
         text-align: center;
         color: white;
-             margin: 0;
+        margin: 0.25rem 0;
     }
     .stTextInput > div > div > input {
         background-color: rgba(30, 30, 47, 0.7) !important;
         color: white !important;
-        border-radius: 8px;
-        padding: 10px;
-        border: 1px solid rgba(255,255,255,0.1);
-        width: 100%;
+        border: 1px solid #444 !important;
+        border-radius: 8px !important;
+        padding: 10px 15px !important;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #2575fc !important;
+        box-shadow: 0 0 0 2px rgba(37, 117, 252, 0.2) !important;
     }
     .stButton > button {
         background: #2575fc !important;
         color: white;
         border: none;
-        padding: 12px 28px;
+        padding: 10px 20px;
         font-size: 16px;
         font-weight: 600;
         cursor: pointer;
         border-radius: 8px;
         transition: all 0.3s ease;
         width: 100%;
-        margin-top: 1rem;
+        margin: 0.5rem 0 !important;
         box-shadow: 0 4px 15px rgba(106, 17, 203, 0.3);
     }
     /* Center radio buttons */
@@ -105,52 +148,51 @@ def load_css():
     }
     .stRadio > div > label {
         margin: 0;
-    }
-    /* Progress bar */
-    .stProgress > div > div > div > div {
-        background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
-        height: 10px;
-        border-radius: 5px;
+        padding: 0;
     }
     .login-container {
         max-width: 400px;
         margin: 0 auto;
-        margin-bottom: 100px;
-        padding: 10px;
+        padding: 1rem;
     }
     .blue-button {
         background-color: #2575fc !important;
     }
-    /* Additional styling for better centering */
-    .main .block-container {
-        padding-top: 2rem;
-    }
     /* Input field container */
     .stTextInput {
         width: 100%;
-        margin-top: 0px;
+        margin: 0.25rem 0 !important;
     }
     /* Center the button container */
     .centered-button {
         display: flex;
         justify-content: center;
         width: 100%;
+        margin: 0 !important;
     }
     /* Logo styling */
     .logo-container {
-        text-align: center;
-        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0.5rem 0;
     }
     .logo-img {
-        height: 80px;
-        margin-bottom: 5px;
+        height: 60px;
+        margin: 0;
     }
     .title {
         font-weight: normal;
         text-align: center;
-        margin-top: 0;
-        margin-bottom: 20px;
+        margin: 0.5rem 0;
         color: white;
+    }
+    /* Remove extra Streamlit spacing */
+    .st-emotion-cache-1v0mbdj {
+        margin: 0 !important;
+    }
+    .st-emotion-cache-1r6slb0 {
+        padding: 0.5rem 1rem !important;
     }
     </style>
     """, unsafe_allow_html=True)
