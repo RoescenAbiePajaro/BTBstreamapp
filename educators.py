@@ -30,6 +30,11 @@ st.set_page_config(
 st.markdown(
     """
     <style>
+    /* Remove margin above header */
+    .stApp {
+        margin-top: -50px;
+    }
+    
     /* Progress bar */
     .stProgress > div > div > div > div {
         background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);

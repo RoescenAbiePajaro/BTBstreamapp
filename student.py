@@ -1,6 +1,91 @@
 # student.py
 import streamlit as st
 
+# Add loading screen CSS
+st.markdown(
+    """
+    <style>
+    /* Progress bar */
+    .stProgress > div > div > div > div {
+        background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+        height: 10px;
+        border-radius: 5px;
+    }
+
+    body {
+        background-color: #0E1117;
+        color: white;
+        
+    }
+
+    
+    /* Card-like containers */
+    .container {
+        background-color: #ffffff;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 10px 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    /* Button styling */
+    .stButton > button {
+        width: 100%;
+        border-radius: 5px;
+        height: 38px;
+        padding: 0 16px;
+        
+    }
+    
+    /* Form fields */
+    .stTextInput > div > div > input {
+        border-radius: 5px;
+    }
+    
+    /* Metrics */
+    .css-1r6slb0 {
+        background-color: #f0f2f6;
+        border-radius: 5px;
+        padding: 10px;
+    }
+    
+    /* Headers */
+    h1, h2, h3 {
+        margin-bottom: 1rem;
+    }
+    
+    /* Columns spacing */
+    .row-widget.stRadio > div {
+        display: flex;
+        justify-content: space-between;
+    }
+    
+    /* Navigation sidebar */
+    .css-1d391kg {
+        padding: 1rem;
+    }
+    
+    /* Status indicators */
+    .status-active {
+        color: #09ab3b;
+        font-weight: bold;
+    }
+    .status-inactive {
+        color: #ff4b4b;
+        font-weight: bold;
+    }
+
+    .st-emotion-cache-zy6yx3 {
+    width: 100%;
+    padding: 2rem 1rem 10rem;
+    max-width: initial;
+    min-width: auto;
+}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 # Import Link with error handling for PyInstaller compatibility
 try:
     from Link import run_link
